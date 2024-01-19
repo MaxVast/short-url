@@ -1,13 +1,8 @@
 use actix_web::{get, post, web, HttpResponse};
 use actix_files::Files;
 use askama::Template;
-use std::env;
-use futures::StreamExt;
-use std::fs::File;
-use std::io::Write;
 use actix_multipart::Multipart;
-use uuid::Uuid;
-use crate::encode::encode::unique_code;
+use crate::{encode::encode::unique_code, shorturl::handler::{handle_csv_upload, handle_upload_asset}, frontend::template::{HomeTemplate, UploadCsvTemplate}};
 
 #[get("/")]
 async fn root() -> HttpResponse {
@@ -22,59 +17,21 @@ async fn random() -> HttpResponse {
     HttpResponse::Ok().body(format!("code random : {}", code))
 }
 
-#[post("/import")]
-async fn import(mut payload: Multipart) -> HttpResponse {
-    // Get the upload folder
-    let upload_dir = env::current_dir().unwrap().join("uploads");
+#[post("/upload-asset")]
+async fn upload_asset(mut payload: Multipart) -> HttpResponse {
+    return handle_upload_asset(&mut payload).await;
+}
 
-    // Create the upload folder if doesnt exist
-    if !upload_dir.exists() {
-        std::fs::create_dir(&upload_dir).unwrap();
-    }
-
-    // Generate an Uuid before each loop
-    let id = Uuid::new_v4();
-
-    // Declare the variable before entering the loop
-    let mut filename_with_id = String::new();
-
-    while let Some(item) = payload.next().await {
-        match item {
-            Ok(mut field) => {
-                let content_disposition = field.content_disposition();
-                let filename = content_disposition.get_filename().unwrap_or("unknown");
-
-                //Check if file is uploaded
-                if filename.len() <= 0 {
-                    return HttpResponse::BadRequest().body("No file uploaded");
-                }
-
-                 // Add id with the file name original
-                 filename_with_id = format!("{}_{}", id, filename);
-
-                let file_path = format!("uploads/{}", filename_with_id);
-                //Upload the file into folder uploads/
-                let mut file = File::create(file_path.clone()).unwrap();
-
-                // Copy the content of the field to the file
-                while let Some(chunk) = field.next().await {
-                    let data = chunk.unwrap();
-                    file.write_all(&data).unwrap();
-                }
-            }
-            //If a error return error 500
-            Err(e) => {
-                HttpResponse::InternalServerError().body(format!("Error: {:?}", e));
-            }
-        }
-    }
-    // Render the full path of the file
-    let image_path = format!("uploads/{}", filename_with_id);
-
-    // Use the template for render
-    let template = UploadTemplate { image: image_path };
+#[get("/upload-csv")]
+async fn upload_csv() -> HttpResponse {
+    let template = UploadCsvTemplate {};
     let response_body = template.render().unwrap();
     HttpResponse::Ok().body(response_body)
+}
+
+#[post("/import-csv")]
+async fn import_csv(mut payload: Multipart) -> HttpResponse {
+    return handle_csv_upload(&mut payload).await;
 }
 
 // fallback route
@@ -82,25 +39,14 @@ async fn handler_404() -> HttpResponse {
     HttpResponse::NotFound().body("404 : Nothing here..")
 }
 
-
-// Structure for context template
-#[derive(Template)]
-#[template(path = "upload_template.html")]
-struct UploadTemplate {
-    image: String,
-}
-
-#[derive(Template)]
-#[template(path = "index.html")]
-struct HomeTemplate {}
-
-
 //Config server
 pub fn config(conf: &mut web::ServiceConfig) {
     let path = web::scope("")
         .service(root)
         .service(random)
-        .service(import)
+        .service(upload_asset)
+        .service(upload_csv)
+        .service(import_csv)
         .service(Files::new("/uploads", "uploads").show_files_listing())
         .default_service(web::to(handler_404));
 

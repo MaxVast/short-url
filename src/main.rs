@@ -9,7 +9,7 @@ async fn main() -> Result<()> {
         std::env::set_var("RUST_LOG", "actix_web=info");
     }
     env_logger::init();
-    let addr = "127.0.0.1:3000";
+    let addr = "127.0.0.1:3001";
 
     println!("✅ Server started successfully");
     println!("✅ http://{}", addr);
