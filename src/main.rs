@@ -1,7 +1,8 @@
-use actix_web::{App, HttpServer};
+use actix_web::{App, HttpServer, web::Data};
 use actix_web::middleware::Logger;
 use std::io::Result;
 use short_url::routes::routes;
+use short_url::database::database;
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -13,10 +14,14 @@ async fn main() -> Result<()> {
 
     println!("✅ Server started successfully");
     println!("✅ http://{}", addr);
+    
+    let db = database::init().await;
+    let db_data = Data::new(db);
 
     // run our app with actix_web, listening globally on port 3000
     HttpServer::new(move || {
         App::new()
+            .app_data(db_data.clone())
             .configure(routes::config)
             .wrap(Logger::default())
     })
