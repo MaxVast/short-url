@@ -2,6 +2,7 @@ use actix_web::HttpResponse;
 use actix_web::web::Bytes;
 use askama::Template;
 use csv::ReaderBuilder;
+use csv::StringRecord;
 use csv::WriterBuilder;
 use std::fs;
 use std::thread;
@@ -81,14 +82,22 @@ pub async fn handle_csv_upload(payload: &mut Multipart) -> HttpResponse {
     let mut rdr = ReaderBuilder::new().from_reader(cloned_file);
     let mut records = rdr.records().collect::<Result<Vec<_>, _>>().unwrap();
 
-    // Add a new value in the second column of each record
+    // Add a new value in the "short url" column of each record
     for record in records.iter_mut() {
         // Generate a unique code
         let code = unique_code(7);
         let short_url_value = format!("https://dps.re/{}", code);
-        // Add the short URL
+
+        // Add the short URL to the specified column
         record.push_field(&short_url_value);
     }
+
+    // Add a new line at the beginning of the CSV file
+    let mut header = StringRecord::new();
+    header.push_field("Link");
+    header.push_field("Short-Url");
+
+    records.insert(0, header);
 
     // Write the modified records back to the CSV file
     let mut wtr = WriterBuilder::new().from_path(&file_path).unwrap();

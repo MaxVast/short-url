@@ -47,7 +47,7 @@ pub fn load_csv_data(file_path: &Path) -> Result<(), Box<dyn Error>> {
                 .execute(connection)?;
 
             // Update global progress for the progress bar
-            let global_progress = (index as f64 / (total_records / BATCH_SIZE as f64)) * 100.0;
+            let global_progress = ((index + 1) as f64 / (total_records / BATCH_SIZE as f64)) * 100.0;
             progress.lock().unwrap().set_position(global_progress as u64);
         }
 
@@ -56,12 +56,13 @@ pub fn load_csv_data(file_path: &Path) -> Result<(), Box<dyn Error>> {
         progress.lock().unwrap().finish();
         println!("✅ Successful insertion of CSV data into the database in: {:?} ✅", elapsed_time);
 
-        // Remove the CSV file after successful insertion
-        remove_file(file_path)?;
-        println!("✅ File CSV Delete");
+        
 
         Ok(()) // Return Ok if the transaction is successful
     })?;
+    // Remove the CSV file after successful insertion
+    remove_file(file_path)?;
+    println!("✅ File CSV Delete");
     
     Ok(()) // Return Ok if the overall function execution is successful
 }
