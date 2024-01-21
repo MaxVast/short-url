@@ -56,13 +56,10 @@ pub fn load_csv_data(file_path: &Path) -> Result<(), Box<dyn Error>> {
         progress.lock().unwrap().finish();
         println!("✅ Successful insertion of CSV data into the database in: {:?} ✅", elapsed_time);
 
-        
-
         Ok(()) // Return Ok if the transaction is successful
     })?;
     // Remove the CSV file after successful insertion
     remove_file(file_path)?;
     println!("✅ File CSV Delete");
-    
     Ok(()) // Return Ok if the overall function execution is successful
 }
