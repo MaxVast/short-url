@@ -7,8 +7,10 @@ use crate::{
     encode::encode::unique_code, 
     shorturl::handler::{handle_csv_upload, handle_upload_asset}, 
     frontend::template::{HomeTemplate, UploadCsvTemplate}, 
-    database::database, 
-    database::schema::short_urls::{url, short_url, dsl::short_urls}
+    database::{
+        database::DbConnection, 
+        schema::short_urls::{url, short_url, dsl::short_urls}
+    }
 };
 
 #[get("/")]
@@ -48,7 +50,7 @@ async fn handler_404() -> HttpResponse {
 
 async fn redirect_short_url(info: web::Path<String>) -> HttpResponse {
     let token = info.into_inner();
-    let connection = &mut database::establish_connection();
+    let connection = &mut DbConnection::establish_connection().connection;
     let url_value = match short_urls.filter(short_url.eq(format!("https://dps.re/{}", token)))
         .select(url)
         .first::<String>(connection)

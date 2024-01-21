@@ -1,20 +1,11 @@
-use actix_web::HttpResponse;
-use actix_web::web::Bytes;
+use actix_web::{HttpResponse, web::Bytes};
 use askama::Template;
-use csv::ReaderBuilder;
-use csv::StringRecord;
-use csv::WriterBuilder;
-use std::fs;
-use std::thread;
-use std::path::Path;
-use std::{env, fs::File, io::Write};
+use csv::{ReaderBuilder, StringRecord, WriterBuilder};
+use std::{env, fs, fs::File, io::Write, thread, path::Path, result::Result};
 use futures::StreamExt;
 use actix_multipart::Multipart;
 use uuid::Uuid;
-use std::result::Result;
-use crate::encode::encode::unique_code;
-use crate::frontend::template::UploadTemplate;
-use crate::database::insert;
+use crate::{encode::encode::unique_code, frontend::template::UploadTemplate, database::insert};
 
 pub async fn handle_csv_upload(payload: &mut Multipart) -> HttpResponse {
     // Get the upload folder

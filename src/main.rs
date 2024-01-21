@@ -1,8 +1,6 @@
-use actix_web::{App, HttpServer, web::Data};
-use actix_web::middleware::Logger;
+use actix_web::{App, HttpServer, web::Data, middleware::Logger};
 use std::io::Result;
-use short_url::routes::routes;
-use short_url::database::database;
+use short_url::{routes::routes, database::database};
 
 #[actix_web::main]
 async fn main() -> Result<()> {
@@ -10,7 +8,7 @@ async fn main() -> Result<()> {
         std::env::set_var("RUST_LOG", "actix_web=info");
     }
     env_logger::init();
-    let addr = "127.0.0.1:3001";
+    let addr = "127.0.0.1:8080";
 
     println!("✅ Server started successfully");
     println!("✅ http://{}", addr);

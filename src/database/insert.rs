@@ -1,15 +1,9 @@
-use diesel::prelude::*;
-use diesel::dsl::insert_into;
-use std::fs::remove_file;
-use std::error::Error;
-use std::path::Path;
-use std::time::Instant;
-use std::sync::{Arc, Mutex};
+use diesel::{prelude::*, dsl::insert_into};
+use std::{fs::remove_file, error::Error, path::Path, time::Instant, sync::{Arc, Mutex}};
 use csv::ReaderBuilder;
 use uuid::Uuid;
 use indicatif::{ProgressBar, ProgressStyle};
-use crate::database::schema::short_urls;
-use crate::database::database;
+use crate::database::{schema::short_urls, database::DbConnection};
 
 const BATCH_SIZE: usize = 1500;
 
@@ -24,7 +18,7 @@ pub fn load_csv_data(file_path: &Path) -> Result<(), Box<dyn Error>> {
     progress.lock().unwrap().set_style(ProgressStyle::default_bar().template("{wide_bar} {percent}%")?);
 
     // Establish a database connection
-    let connection = &mut database::establish_connection();
+    let connection = &mut DbConnection::establish_connection().connection;
     println!("Data CSV insert in database");
 
     // Database transaction
